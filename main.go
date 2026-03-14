@@ -34,18 +34,18 @@ Usage:
   new-dev-vm [option]
 
 Options:
-  --windows, -windows    Provision a Windows development VM (default)
-  --ubuntu,  -ubuntu     Provision an Ubuntu development VM
-  --debian,  -debian     Provision a Debian development VM
-  --config,  -config     Print the active configuration from ~/.config/new-dev-vm.yml
-  --help,    -help, -h   Show this help message
+  --windows    Provision a Windows development VM (default)
+  --ubuntu     Provision an Ubuntu development VM
+  --debian     Provision a Debian development VM
+  --config     Print the active configuration from ~/.config/new-dev-vm.yml
+  --help       Show this help message
 
 Configuration file: ~/.config/new-dev-vm.yml
+
   Copy new-dev-vm.example.yml to that path and edit before first use.
 `
 
 func main() {
-	// Normalise args: strip leading "--" or "-" to compare uniformly.
 	args := os.Args[1:]
 	var mode string
 	for _, a := range args {
@@ -68,24 +68,17 @@ func main() {
 		}
 	}
 
-	if mode == "" {
-		mode = "windows" // default
-	}
-
-	// Load config (always needed except --help which already exited).
 	cfg, err := config.Load()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
 		os.Exit(1)
 	}
 
-	// --config: print and exit.
 	if mode == "config" {
 		config.Print(cfg)
 		os.Exit(0)
 	}
 
-	// All provisioning modes require elevation.
 	if !elevation.IsElevated() {
 		fmt.Println("Not running as Administrator — requesting elevation via UAC...")
 		if err := elevation.RelaunchElevated(); err != nil {
@@ -95,9 +88,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Dispatch.
 	switch mode {
-	case "windows":
+	case "", "windows":
 		if err := windows.ProvisionWindows(cfg); err != nil {
 			fmt.Fprintf(os.Stderr, "Windows provisioning failed: %v\n", err)
 			os.Exit(1)
