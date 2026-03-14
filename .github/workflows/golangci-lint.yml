@@ -1,0 +1,38 @@
+---
+name: golangci-lint
+'on':
+  push:
+    paths:
+      - "go.sum"
+      - "go.mod"
+      - "**.go"
+      - ".golangci.yml"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint Go code
+    permissions:
+      contents: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - run: git fetch --force --tags
+
+      - uses: actions/setup-go@v6
+        with:
+          cache-dependency-path: ${{ github.workspace }}/go.sum
+          go-version-file: ${{ github.workspace }}/go.mod
+
+      - run: go version
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v9
