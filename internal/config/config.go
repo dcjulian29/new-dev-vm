@@ -22,16 +22,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"strings"
-
 	"gopkg.in/yaml.v3"
 )
 
 // Config holds all settings loaded from ~/.config/new-dev-vm.yml.
 type Config struct {
 	// Shared
-	ProcessorCount int    `yaml:"processorCount"`
 	MemoryBytes    int64  `yaml:"memoryBytes"`
+	ProcessorCount int    `yaml:"processorCount"`
 	VirtualSwitch  string `yaml:"virtualSwitch"`
 
 	// Windows VM
@@ -94,8 +92,7 @@ func Load() (*Config, error) {
 func Print(cfg *Config) {
 	path, _ := configPath()
 
-	fmt.Printf("Active configuration  (%s)\n", path)
-	fmt.Println(strings.Repeat("─", 60))
+	fmt.Printf("\nActive configuration  (%s)\n\n", path)
 	fmt.Println("── Shared ──────────────────────────────────────────────────")
 	fmt.Printf("  memoryBytes          : %d (%.1f GB)\n", cfg.MemoryBytes,
 		float64(cfg.MemoryBytes)/1e9)
@@ -103,7 +100,7 @@ func Print(cfg *Config) {
 	fmt.Printf("  virtualSwitch        : %s\n", cfg.VirtualSwitch)
 	fmt.Println()
 	fmt.Println("── Windows VM ──────────────────────────────────────────────")
-	fmt.Printf("  windowsBaseImagePath        : %s\n", cfg.WindowsBaseImagePath)
+	fmt.Printf("  baseImagePath        : %s\n", cfg.WindowsBaseImagePath)
 	fmt.Printf("  baseImagePattern     : %s\n", cfg.WindowsBaseImagePattern)
 	fmt.Printf("  installPackage       : %s\n", cfg.WindowsInstallPackage)
 	fmt.Printf("  unattendTemplate     : %s\n", cfg.WindowsUnattendTemplate)
