@@ -61,28 +61,34 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 
 	computerName := strings.ToUpper(hostname) + "DEVL" + string(params.distro[0])
 
-	fmt.Printf("\n[%s] Provisioning VM: %s\n", params.distro, computerName)
+	fmt.Printf("\n[%s] Provisioning VM: %s\n\n", params.distro, computerName)
 
 	fmt.Println("[1/9] Checking Hyper-V...")
 	if err := hyperv.CheckHyperVEnabled(); err != nil {
 		return err
 	}
 
-	fmt.Printf("[2/9] Locating '%s' ISO...\n", params.distro)
+	fmt.Printf("[2/9] Locating %s ISO...\n", params.distro)
 	isoPath, err := filesystem.SearchForFile(params.isoSearchPath, params.isoPattern)
 	if err != nil {
 		return fmt.Errorf("finding %s ISO: %w", params.distro, err)
 	}
 
-	fmt.Printf("       ISO: %s\n", isoPath)
+	fmt.Printf("      ISO: %s\n", isoPath)
 
 	fmt.Println("[3/9] Creating VHDX...")
-	vhdxPath := filepath.Join(computerName + ".vhdx")
+
+	directory, err := hyperv.GetVMStoragePath()
+	if err != nil {
+		return err
+	}
+
+	vhdxPath := filepath.Join(directory, computerName+".vhdx")
 	if err := hyperv.CreateDynamicVHDX(vhdxPath, cfg.LinuxDiskSizeBytes); err != nil {
 		return fmt.Errorf("creating VHDX: %w", err)
 	}
 
-	fmt.Printf("       VHDX: %s\n", vhdxPath)
+	fmt.Printf("      VHDX: %s\n", vhdxPath)
 
 	fmt.Println("[4/9] Creating virtual machine (Generation 2)...")
 	vmCfg := hyperv.VMConfig{
@@ -105,12 +111,12 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 	}
 
 	if cfg.LinuxDisableSecureBoot {
-		fmt.Println("       Disabling Secure Boot...")
+		fmt.Println("      Disabling Secure Boot...")
 		if err := hyperv.DisableSecureBoot(computerName); err != nil {
 			return err
 		}
 	} else {
-		fmt.Println("       Setting Secure Boot template to MicrosoftUEFICertificateAuthority...")
+		fmt.Println("      Setting Secure Boot template to MicrosoftUEFICertificateAuthority...")
 		if err := hyperv.SetSecureBootTemplate(computerName, "MicrosoftUEFICertificateAuthority"); err != nil {
 			return err
 		}
