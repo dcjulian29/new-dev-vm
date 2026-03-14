@@ -1,0 +1,53 @@
+# new-dev-vm configuration
+# Copy this file to ~/.config/new-dev-vm.yml and edit to suit your environment.
+
+# ── Shared ────────────────────────────────────────────────────────────────────
+virtualSwitch: "Default Switch"
+processorCount: 4
+memoryBytes: 8589934592   # 8 GB
+
+# ── Windows VM ────────────────────────────────────────────────────────────────
+# Directory that is searched for the base disk files
+windowsBaseImagePath: "C:\\Hyper-V\\BaseImages"
+
+# Pattern used to locate the latest Windows base VHDX
+windowsBaseImagePattern: "Win11Base-*.vhdx"
+
+# Path to the start-menu layout XML
+windowsStartLayout: "C:\\HyperV\\Templates\\StartLayout.xml"
+
+# Path to the startup script that is injected into the Windows VM
+windowsStartScript: "C:\\HyperV\\Scripts\\startup.ps1"
+
+# Name of the installation package to install during startup
+windowsInstallPackage: "developPackage"
+
+# Directory that contains the Syncthing files
+windowsSyncBasePath: "C:\\HyperV\\Syncthing"
+
+# Path to the unattend XML template
+windowsUnattendTemplate: "C:\\HyperV\\Templates\\unattend.xml"
+
+# The name of the Windows user name for the VM
+windowsUser: "developer"
+
+# ── Linux (shared) ────────────────────────────────────────────────────────────
+# Disable Secure Boot for Linux VMs (required for most Linux guests on Gen-2)
+linuxDisableSecureBoot: true
+
+# Linux VM disk size (bytes)
+linuxDiskSizeBytes: 42949672960  # 40 GB
+
+# ── Ubuntu ────────────────────────────────────────────────────────────────────
+# Pattern to find the Ubuntu ISO on the host
+ubuntuIsoPattern: "ubuntu-*-desktop-amd64.iso"
+
+# Directory that is searched for the ISO
+ubuntuIsoSearchPath: "C:\\HyperV\\ISOs"
+
+# ── Debian ────────────────────────────────────────────────────────────────────
+# Pattern to find the Debian ISO on the host
+debianIsoPattern: "debian-*-amd64-netinst.iso"
+
+# Directory that is searched for the ISO
+debianIsoSearchPath: "C:\\HyperV\\ISOs"

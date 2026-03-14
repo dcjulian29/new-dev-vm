@@ -1,0 +1,172 @@
+package hyperv
+
+/*
+Copyright © 2026 Julian Easterling
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+import (
+	"fmt"
+
+	"github.com/dcjulian29/new-dev-vm/internal/ps"
+)
+
+// VMConfig holds the parameters used when creating a Hyper-V VM.
+type VMConfig struct {
+	Name               string
+	VHDXPath           string
+	VirtualSwitch      string
+	MaximumMemoryBytes int64
+	MemoryBytes        int64
+	ProcessorCount     int
+	Generation         int  // 1 or 2
+	SecureBoot         bool // only relevant for Generation 2
+}
+
+// CreateVM creates a new Hyper-V virtual machine with the provided config.
+func CreateVM(cfg VMConfig) error {
+	if cfg.Generation == 0 {
+		cfg.Generation = 2
+	}
+
+	script := fmt.Sprintf(
+		`New-VM -Generation %d -Name "%s" -MemoryStartupBytes %d `+
+			`-SwitchName "%s"-VHDPath "%s" -ErrorAction Stop`,
+		cfg.Generation,
+		ps.Escape(cfg.Name),
+		cfg.MemoryBytes,
+		ps.Escape(cfg.VirtualSwitch),
+		ps.Escape(cfg.VHDXPath),
+	)
+	if err := ps.RunPowershell(script); err != nil {
+		return fmt.Errorf("creating VM %q: %w", cfg.Name, err)
+	}
+
+	return nil
+}
+
+// SetProcessorCount sets the number of virtual processors on an existing VM.
+func SetProcessorCount(name string, count int) error {
+	script := fmt.Sprintf(
+		`Set-VMProcessor -VMName "%s" -Count %d -ErrorAction Stop`,
+		ps.Escape(name), count,
+	)
+
+	return ps.RunPowershell(script)
+}
+
+// SetDynamicMemory enables dynamic memory with the given startup/min/max values.
+func SetDynamicMemory(name string, startBytes, minBytes, maxBytes int64) error {
+	script := fmt.Sprintf(
+		`Set-VMMemory -VMName "%s" -DynamicMemoryEnabled $true `+
+			`-StartupBytes %d -MinimumBytes %d -MaximumBytes %d -ErrorAction Stop`,
+		ps.Escape(name), startBytes, minBytes, maxBytes,
+	)
+
+	return ps.RunPowershell(script)
+}
+
+// DisableSecureBoot turns off Secure Boot for a Generation 2 VM.
+func DisableSecureBoot(name string) error {
+	script := fmt.Sprintf(
+		`Set-VMFirmware -VMName "%s" -EnableSecureBoot Off -ErrorAction Stop`,
+		ps.Escape(name),
+	)
+	if err := ps.RunPowershell(script); err != nil {
+		return fmt.Errorf("disabling Secure Boot for VM %q: %w", name, err)
+	}
+
+	return nil
+}
+
+// SetSecureBootTemplate sets the Secure Boot template (e.g. "MicrosoftUEFICertificateAuthority"
+// for Linux, "MicrosoftWindows" for Windows).
+func SetSecureBootTemplate(name, template string) error {
+	script := fmt.Sprintf(
+		`Set-VMFirmware -VMName "%s" -SecureBootTemplate "%s" -ErrorAction Stop`,
+		ps.Escape(name), ps.Escape(template),
+	)
+
+	return ps.RunPowershell(script)
+}
+
+// AttachDVD attaches an ISO to the VM's DVD drive.
+func AttachDVD(name, isoPath string) error {
+	script := fmt.Sprintf(
+		`Add-VMDvdDrive -VMName "%s" -Path "%s" -ErrorAction Stop`,
+		ps.Escape(name), ps.Escape(isoPath),
+	)
+
+	return ps.RunPowershell(script)
+}
+
+// SetBootOrderDVDFirst sets the firmware boot order so that the DVD drive is first
+func SetBootOrderDVDFirst(name string) error {
+	script := fmt.Sprintf(
+		`$vm = Get-VM -Name "%s"; `+
+			`$dvd = Get-VMDvdDrive -VMName "%s"; `+
+			`$hd  = Get-VMHardDiskDrive -VMName "%s"; `+
+			`Set-VMFirmware -VM $vm -BootOrder $dvd,$hd -ErrorAction Stop`,
+		ps.Escape(name), ps.Escape(name), ps.Escape(name),
+	)
+
+	return ps.RunPowershell(script)
+}
+
+// EnableCheckpoints enables standard (production) checkpoints.
+func EnableCheckpoints(name string) error {
+	script := fmt.Sprintf(
+		`Set-VM -Name "%s" -CheckpointType Standard -ErrorAction Stop`, ps.Escape(name))
+
+	return ps.RunPowershell(script)
+}
+
+// DisableAutomaticCheckpoints turns off automatic checkpoints.
+func DisableAutomaticCheckpoints(name string) error {
+	script := fmt.Sprintf(
+		`Set-VM -Name "%s" -AutomaticCheckpointsEnabled $false -ErrorAction Stop`, ps.Escape(name))
+
+	return ps.RunPowershell(script)
+}
+
+// StartVM starts the named virtual machine.
+func StartVM(name string) error {
+	script := fmt.Sprintf(`Start-VM -Name "%s" -ErrorAction Stop`, ps.Escape(name))
+	if err := ps.RunPowershell(script); err != nil {
+		return fmt.Errorf("starting VM %q: %w", name, err)
+	}
+
+	return nil
+}
+
+// OpenConsole opens the Hyper-V Virtual Machine Connection console.
+func OpenConsole(name string) error {
+	script := fmt.Sprintf(
+		`vmconnect.exe localhost "%s"`,
+		ps.Escape(name),
+	)
+
+	return ps.RunPowershell(script)
+}
+
+// RemoveVM forcefully removes the VM and all of its associated files.
+func RemoveVM(name string) error {
+	script := fmt.Sprintf(
+		`Stop-VM -Name "%s" -Force -TurnOff -ErrorAction SilentlyContinue; `+
+			`Remove-VM -Name "%s" -Force -ErrorAction Stop`,
+		ps.Escape(name), ps.Escape(name),
+	)
+
+	return ps.RunPowershell(script)
+}

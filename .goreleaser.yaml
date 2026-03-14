@@ -1,0 +1,45 @@
+---
+version: 2
+before:
+  hooks:
+    - go mod tidy
+    - go mod verify
+    - go vet
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+    goarch:
+      - amd64
+archives:
+  - files:
+      - LICENSE
+      - new-dev-vm.example.yml
+    name_template: "dcjulian29.apps.new-dev-vm_{{ .Version }}_{{ .Os }}"
+    format_overrides:
+      - formats: [ 'zip' ]
+        goos: windows
+chocolateys:
+  - name: dcjulian29.apps.new-dev-vm
+    authors: Julian Easterling <julian@julianscorner.com>
+    project_url: https://github.com/dcjulian29/cert-auth/
+    copyright: 2023 Julian Easterling julian@julianscorner.com
+    license_url: https://github.com/dcjulian29/cert-auth/blob/main/LICENSE
+    require_license_acceptance: false
+    bug_tracker_url: https://github.com/dcjulian29/cert-auth/issues
+    description: |
+      new-dev-vm is a CLI tool for provisioning Hyper-V development virtual machines.
+    api_key: "{{ .Env.CHOCO_API_KEY}}"
+    source_repo: "https://www.myget.org/F/dcjulian29-chocolatey/"
+    skip_publish: false
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
