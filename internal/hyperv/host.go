@@ -17,35 +17,22 @@ limitations under the License.
 */
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 
-	"github.com/StackExchange/wmi"
 	"github.com/dcjulian29/go-toolbox/filesystem"
 	"github.com/dcjulian29/new-dev-vm/internal/ps"
 )
 
-type virtualSystemManagementServiceSettingData struct {
-	DefaultVirtualHardDiskPath string
-}
-
 // GetVMStoragePath returns the configured VM storage path from the Hyper-V host.
 func GetVMStoragePath() (string, error) {
-	var settings []virtualSystemManagementServiceSettingData
-
-	query := wmi.CreateQuery(&settings, "")
-
-	err := wmi.QueryNamespace(query, &settings, `root\virtualization\v2`)
+	script := `(Get-VMHost).VirtualHardDiskPath`
+	directory, err := ps.RunPowershellOutput(script)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("retrieving default hard disk path: %w", err)
 	}
 
-	if len(settings) == 0 {
-		return "", errors.New("no Hyper-V management service settings found")
-	}
-
-	return settings[0].DefaultVirtualHardDiskPath, nil
+	return directory, nil
 }
 
 // FindLatestBaseImage searches directoryPath (and one level of subdirectories)

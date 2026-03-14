@@ -7,9 +7,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require (
-	github.com/StackExchange/wmi v1.2.1
-	github.com/dcjulian29/go-toolbox v0.14.1
-)
-
-require github.com/go-ole/go-ole v1.2.5 // indirect
+require github.com/dcjulian29/go-toolbox v0.14.1
