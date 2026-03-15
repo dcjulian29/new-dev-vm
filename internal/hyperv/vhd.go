@@ -20,16 +20,18 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/dcjulian29/new-dev-vm/internal/ps"
+	"github.com/dcjulian29/go-toolbox/execute"
 )
 
 // CreateDifferencingVHDX creates a differencing VHDX.
 func CreateDifferencingVHDX(referencePath, vhdxPath string) error {
 	script := fmt.Sprintf(
 		`New-VHD -ParentPath "%s" -Path "%s" -Differencing -ErrorAction Stop`,
-		ps.Escape(referencePath), ps.Escape(vhdxPath),
+		execute.EscapeForPowershell(referencePath),
+		execute.EscapeForPowershell(vhdxPath),
 	)
-	if err := ps.RunPowershell(script); err != nil {
+
+	if err := execute.RunPowershell(script); err != nil {
 		return fmt.Errorf("creating differencing VHDX: %w", err)
 	}
 
@@ -40,9 +42,10 @@ func CreateDifferencingVHDX(referencePath, vhdxPath string) error {
 func CreateFixedVHDX(vhdxPath string, sizeBytes int64) error {
 	script := fmt.Sprintf(
 		`New-VHD -Path "%s" -SizeBytes %d -Fixed -ErrorAction Stop`,
-		ps.Escape(vhdxPath), sizeBytes,
+		execute.EscapeForPowershell(vhdxPath), sizeBytes,
 	)
-	if err := ps.RunPowershell(script); err != nil {
+
+	if err := execute.RunPowershell(script); err != nil {
 		return fmt.Errorf("creating fixed VHDX: %w", err)
 	}
 
@@ -53,9 +56,10 @@ func CreateFixedVHDX(vhdxPath string, sizeBytes int64) error {
 func CreateDynamicVHDX(vhdxPath string, sizeBytes int64) error {
 	script := fmt.Sprintf(
 		`New-VHD -Path "%s" -SizeBytes %d -Dynamic -ErrorAction Stop`,
-		ps.Escape(vhdxPath), sizeBytes,
+		execute.EscapeForPowershell(vhdxPath), sizeBytes,
 	)
-	if err := ps.RunPowershell(script); err != nil {
+
+	if err := execute.RunPowershell(script); err != nil {
 		return fmt.Errorf("creating dynamic VHDX: %w", err)
 	}
 
@@ -67,9 +71,10 @@ func MountVHDX(vhdxPath string) (string, error) {
 	script := fmt.Sprintf(
 		`$v = Mount-VHD -Path "%s" -PassThru -ErrorAction Stop; `+
 			`($v | Get-Disk | Get-Partition | Get-Volume).DriveLetter`,
-		ps.Escape(vhdxPath),
+		execute.EscapeForPowershell(vhdxPath),
 	)
-	letter, err := ps.RunPowershellOutput(script)
+
+	letter, err := execute.RunPowershellCapture(script)
 	if err != nil {
 		return "", fmt.Errorf("mounting VHDX %s: %w", filepath.Base(vhdxPath), err)
 	}
@@ -84,6 +89,9 @@ func MountVHDX(vhdxPath string) (string, error) {
 // DismountVHDX unmounts the VHDX at the given path.
 func DismountVHDX(vhdxPath string) error {
 	script := fmt.Sprintf(
-		`Dismount-VHD -Path "%s" -ErrorAction SilentlyContinue`, ps.Escape(vhdxPath))
-	return ps.RunPowershell(script)
+		`Dismount-VHD -Path "%s" -ErrorAction SilentlyContinue`,
+		execute.EscapeForPowershell(vhdxPath),
+	)
+
+	return execute.RunPowershell(script)
 }

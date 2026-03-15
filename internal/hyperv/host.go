@@ -20,14 +20,14 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/dcjulian29/go-toolbox/filesystem"
-	"github.com/dcjulian29/new-dev-vm/internal/ps"
 )
 
 // GetVMStoragePath returns the configured VM storage path from the Hyper-V host.
 func GetVMStoragePath() (string, error) {
 	script := `(Get-VMHost).VirtualHardDiskPath`
-	directory, err := ps.RunPowershellOutput(script)
+	directory, err := execute.RunPowershellCapture(script)
 	if err != nil {
 		return "", fmt.Errorf("retrieving default hard disk path: %w", err)
 	}
@@ -65,7 +65,7 @@ func FindLatestBaseImage(directoryPath, pattern string) (string, error) {
 
 // CheckHyperVEnabled returns an error if the Hyper-V role is not available.
 func CheckHyperVEnabled() error {
-	out, err := ps.RunPowershellOutput(
+	out, err := execute.RunPowershellCapture(
 		`(Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V).State`,
 	)
 	if err != nil {

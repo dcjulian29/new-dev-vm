@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dcjulian29/new-dev-vm/internal/ps"
+	"github.com/dcjulian29/go-toolbox/execute"
 )
 
 // VMConfig holds the parameters used when creating a Hyper-V VM.
@@ -45,12 +45,13 @@ func CreateVM(cfg VMConfig) error {
 		`New-VM -Generation %d -Name "%s" -MemoryStartupBytes %d `+
 			`-SwitchName "%s"-VHDPath "%s" -ErrorAction Stop`,
 		cfg.Generation,
-		ps.Escape(cfg.Name),
+		execute.EscapeForPowershell(cfg.Name),
 		cfg.MemoryBytes,
-		ps.Escape(cfg.VirtualSwitch),
-		ps.Escape(cfg.VHDXPath),
+		execute.EscapeForPowershell(cfg.VirtualSwitch),
+		execute.EscapeForPowershell(cfg.VHDXPath),
 	)
-	if err := ps.RunPowershell(script); err != nil {
+
+	if err := execute.RunPowershell(script); err != nil {
 		return fmt.Errorf("creating VM %q: %w", cfg.Name, err)
 	}
 
@@ -61,10 +62,10 @@ func CreateVM(cfg VMConfig) error {
 func SetProcessorCount(name string, count int) error {
 	script := fmt.Sprintf(
 		`Set-VMProcessor -VMName "%s" -Count %d -ErrorAction Stop`,
-		ps.Escape(name), count,
+		execute.EscapeForPowershell(name), count,
 	)
 
-	return ps.RunPowershell(script)
+	return execute.RunPowershell(script)
 }
 
 // SetDynamicMemory enables dynamic memory with the given startup/min/max values.
@@ -72,19 +73,20 @@ func SetDynamicMemory(name string, startBytes, minBytes, maxBytes int64) error {
 	script := fmt.Sprintf(
 		`Set-VMMemory -VMName "%s" -DynamicMemoryEnabled $true `+
 			`-StartupBytes %d -MinimumBytes %d -MaximumBytes %d -ErrorAction Stop`,
-		ps.Escape(name), startBytes, minBytes, maxBytes,
+		execute.EscapeForPowershell(name), startBytes, minBytes, maxBytes,
 	)
 
-	return ps.RunPowershell(script)
+	return execute.RunPowershell(script)
 }
 
 // DisableSecureBoot turns off Secure Boot for a Generation 2 VM.
 func DisableSecureBoot(name string) error {
 	script := fmt.Sprintf(
 		`Set-VMFirmware -VMName "%s" -EnableSecureBoot Off -ErrorAction Stop`,
-		ps.Escape(name),
+		execute.EscapeForPowershell(name),
 	)
-	if err := ps.RunPowershell(script); err != nil {
+
+	if err := execute.RunPowershell(script); err != nil {
 		return fmt.Errorf("disabling Secure Boot for VM %q: %w", name, err)
 	}
 
@@ -96,20 +98,22 @@ func DisableSecureBoot(name string) error {
 func SetSecureBootTemplate(name, template string) error {
 	script := fmt.Sprintf(
 		`Set-VMFirmware -VMName "%s" -SecureBootTemplate "%s" -ErrorAction Stop`,
-		ps.Escape(name), ps.Escape(template),
+		execute.EscapeForPowershell(name),
+		execute.EscapeForPowershell(template),
 	)
 
-	return ps.RunPowershell(script)
+	return execute.RunPowershell(script)
 }
 
 // AttachDVD attaches an ISO to the VM's DVD drive.
 func AttachDVD(name, isoPath string) error {
 	script := fmt.Sprintf(
 		`Add-VMDvdDrive -VMName "%s" -Path "%s" -ErrorAction Stop`,
-		ps.Escape(name), ps.Escape(isoPath),
+		execute.EscapeForPowershell(name),
+		execute.EscapeForPowershell(isoPath),
 	)
 
-	return ps.RunPowershell(script)
+	return execute.RunPowershell(script)
 }
 
 // SetBootOrderDVDFirst sets the firmware boot order so that the DVD drive is first
@@ -119,32 +123,39 @@ func SetBootOrderDVDFirst(name string) error {
 			`$dvd = Get-VMDvdDrive -VMName "%s"; `+
 			`$hd  = Get-VMHardDiskDrive -VMName "%s"; `+
 			`Set-VMFirmware -VM $vm -BootOrder $dvd,$hd -ErrorAction Stop`,
-		ps.Escape(name), ps.Escape(name), ps.Escape(name),
+		execute.EscapeForPowershell(name),
+		execute.EscapeForPowershell(name),
+		execute.EscapeForPowershell(name),
 	)
 
-	return ps.RunPowershell(script)
+	return execute.RunPowershell(script)
 }
 
 // EnableCheckpoints enables standard (production) checkpoints.
 func EnableCheckpoints(name string) error {
 	script := fmt.Sprintf(
-		`Set-VM -Name "%s" -CheckpointType Standard -ErrorAction Stop`, ps.Escape(name))
+		`Set-VM -Name "%s" -CheckpointType Standard -ErrorAction Stop`,
+		execute.EscapeForPowershell(name),
+	)
 
-	return ps.RunPowershell(script)
+	return execute.RunPowershell(script)
 }
 
 // DisableAutomaticCheckpoints turns off automatic checkpoints.
 func DisableAutomaticCheckpoints(name string) error {
 	script := fmt.Sprintf(
-		`Set-VM -Name "%s" -AutomaticCheckpointsEnabled $false -ErrorAction Stop`, ps.Escape(name))
+		`Set-VM -Name "%s" -AutomaticCheckpointsEnabled $false -ErrorAction Stop`,
+		execute.EscapeForPowershell(name),
+	)
 
-	return ps.RunPowershell(script)
+	return execute.RunPowershell(script)
 }
 
 // StartVM starts the named virtual machine.
 func StartVM(name string) error {
-	script := fmt.Sprintf(`Start-VM -Name "%s" -ErrorAction Stop`, ps.Escape(name))
-	if err := ps.RunPowershell(script); err != nil {
+	script := fmt.Sprintf(`Start-VM -Name "%s" -ErrorAction Stop`, execute.EscapeForPowershell(name))
+
+	if err := execute.RunPowershell(script); err != nil {
 		return fmt.Errorf("starting VM %q: %w", name, err)
 	}
 
@@ -153,12 +164,9 @@ func StartVM(name string) error {
 
 // OpenConsole opens the Hyper-V Virtual Machine Connection console.
 func OpenConsole(name string) error {
-	script := fmt.Sprintf(
-		`vmconnect.exe localhost "%s"`,
-		ps.Escape(name),
-	)
+	script := fmt.Sprintf(`vmconnect.exe localhost "%s"`, execute.EscapeForPowershell(name))
 
-	return ps.RunPowershell(script)
+	return execute.RunPowershell(script)
 }
 
 // RemoveVM forcefully removes the VM and all of its associated files.
@@ -166,21 +174,28 @@ func RemoveVM(name string) error {
 	script := fmt.Sprintf(
 		`Stop-VM -Name "%s" -Force -TurnOff -ErrorAction SilentlyContinue; `+
 			`Remove-VM -Name "%s" -Force -ErrorAction Stop`,
-		ps.Escape(name), ps.Escape(name),
+		execute.EscapeForPowershell(name),
+		execute.EscapeForPowershell(name),
 	)
 
-	return ps.RunPowershell(script)
+	return execute.RunPowershell(script)
 }
 
 // VMExists returns true when a VM with that name is registered in Hyper-V.
 func VMExists(name string) bool {
-	script := fmt.Sprintf(`(Get-VM -VMName '%s' -ErrorAction SilentlyContinue) -ne $null`, name)
-	exist, err := ps.RunPowershellOutput(script)
+	script := fmt.Sprintf(
+		`(Get-VM -VMName '%s' -ErrorAction SilentlyContinue) -ne $null`,
+		execute.EscapeForPowershell(name),
+	)
+
+	exist, err := execute.RunPowershellCapture(script)
 
 	return err == nil && strings.EqualFold(exist, "True")
 }
 
 // VMState returns the current state string ("Running", "Off", "Saved", ...).
 func VMState(name string) (string, error) {
-	return ps.RunPowershellOutput(fmt.Sprintf(`(Get-VM -VMName '%s').State`, name))
+	script := fmt.Sprintf(`(Get-VM -VMName '%s').State`, execute.EscapeForPowershell(name))
+
+	return execute.RunPowershellCapture(script)
 }
