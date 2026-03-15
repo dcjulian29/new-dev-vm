@@ -20,6 +20,7 @@ limitations under the License.
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -61,7 +62,12 @@ func ProvisionWindows(cfg *config.Config) error {
 
 	fmt.Println("[3/9] Creating differencing VHDX...")
 
-	vhdxPath := computerName + ".vhdx"
+	directory, err := hyperv.GetVMStoragePath()
+	if err != nil {
+		return err
+	}
+
+	vhdxPath := filepath.Join(directory, computerName+".vhdx")
 
 	if filesystem.FileExists(vhdxPath) {
 		state, err := hyperv.VMState(computerName)
@@ -83,6 +89,8 @@ func ProvisionWindows(cfg *config.Config) error {
 	if err := hyperv.CreateDifferencingVHDX(baseImage, vhdxPath); err != nil {
 		return err
 	}
+
+	fmt.Printf("      VHDX: %s\n", vhdxPath)
 
 	fmt.Println("[4/9] Injecting files into VHDX...")
 	if err := disk.InjectWindowsFiles(
