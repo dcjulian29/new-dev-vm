@@ -18,6 +18,7 @@ limitations under the License.
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/dcjulian29/new-dev-vm/internal/ps"
 )
@@ -169,4 +170,17 @@ func RemoveVM(name string) error {
 	)
 
 	return ps.RunPowershell(script)
+}
+
+// VMExists returns true when a VM with that name is registered in Hyper-V.
+func VMExists(name string) bool {
+	script := fmt.Sprintf(`(Get-VM -VMName '%s' -ErrorAction SilentlyContinue) -ne $null`, name)
+	exist, err := ps.RunPowershellOutput(script)
+
+	return err == nil && strings.EqualFold(exist, "True")
+}
+
+// VMState returns the current state string ("Running", "Off", "Saved", ...).
+func VMState(name string) (string, error) {
+	return ps.RunPowershellOutput(fmt.Sprintf(`(Get-VM -VMName '%s').State`, name))
 }
