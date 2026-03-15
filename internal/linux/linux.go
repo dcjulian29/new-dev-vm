@@ -84,6 +84,23 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 	}
 
 	vhdxPath := filepath.Join(directory, computerName+".vhdx")
+	if filesystem.FileExists(vhdxPath) {
+		state, err := hyperv.VMState(computerName)
+		if err != nil {
+			return err
+		}
+		switch state {
+		case "Running":
+			return fmt.Errorf("cannot create '%s' because '%s' is running", vhdxPath, computerName)
+		case "Saved":
+			return fmt.Errorf("cannot create '%s' because '%s' is saved", vhdxPath, computerName)
+		default:
+			if err := filesystem.RemoveFile(vhdxPath); err != nil {
+				return err
+			}
+		}
+	}
+
 	if err := hyperv.CreateDynamicVHDX(vhdxPath, cfg.LinuxDiskSizeBytes); err != nil {
 		return fmt.Errorf("creating VHDX: %w", err)
 	}
@@ -91,6 +108,13 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 	fmt.Printf("      VHDX: %s\n", vhdxPath)
 
 	fmt.Println("[4/9] Creating virtual machine (Generation 2)...")
+
+	if hyperv.VMExists(computerName) {
+		if err := hyperv.RemoveVM(computerName); err != nil {
+			return err
+		}
+	}
+
 	vmCfg := hyperv.VMConfig{
 		Name:           computerName,
 		VHDXPath:       vhdxPath,

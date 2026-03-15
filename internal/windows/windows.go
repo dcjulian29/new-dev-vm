@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dcjulian29/go-toolbox/filesystem"
 	"github.com/dcjulian29/new-dev-vm/internal/config"
 	"github.com/dcjulian29/new-dev-vm/internal/disk"
 	"github.com/dcjulian29/new-dev-vm/internal/hyperv"
@@ -59,7 +60,26 @@ func ProvisionWindows(cfg *config.Config) error {
 	fmt.Printf("       Base image: %s\n", baseImage)
 
 	fmt.Println("[3/9] Creating differencing VHDX...")
+
 	vhdxPath := computerName + ".vhdx"
+
+	if filesystem.FileExists(vhdxPath) {
+		state, err := hyperv.VMState(computerName)
+		if err != nil {
+			return err
+		}
+		switch state {
+		case "Running":
+			return fmt.Errorf("cannot create '%s' because '%s' is running", vhdxPath, computerName)
+		case "Saved":
+			return fmt.Errorf("cannot create '%s' because '%s' is saved", vhdxPath, computerName)
+		default:
+			if err := filesystem.RemoveFile(vhdxPath); err != nil {
+				return err
+			}
+		}
+	}
+
 	if err := hyperv.CreateDifferencingVHDX(baseImage, vhdxPath); err != nil {
 		return err
 	}
@@ -75,6 +95,13 @@ func ProvisionWindows(cfg *config.Config) error {
 	}
 
 	fmt.Println("[5/9] Creating virtual machine...")
+
+	if hyperv.VMExists(computerName) {
+		if err := hyperv.RemoveVM(computerName); err != nil {
+			return err
+		}
+	}
+
 	vmCfg := hyperv.VMConfig{
 		Name:           computerName,
 		VHDXPath:       vhdxPath,
