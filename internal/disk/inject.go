@@ -69,11 +69,10 @@ func InjectWindowsFiles(vhdxPath, computerName, password string, cfg config.Conf
 }
 
 func startCommand(cfg *config.Config) error {
-	root := filepath.Join(driveLetter, "Windows", "Setup", "Scripts")
-	path := filepath.Join(root, "SetupComplete.cmd")
+	path := filepath.Join(driveLetter, "Windows", "Setup", "Scripts", "SetupComplete.cmd")
 	content := "%WINDIR%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe "
 	content = content + "-NoProfile -NonInteractive -ExecutionPolicy Bypass -NoLogo -Command "
-	content = content + root + "\\" + cfg.WindowsStartScript
+	content = content + "%WINDIR%\\Setup\\Scripts\\" + filepath.Base(cfg.WindowsStartScript)
 
 	fmt.Println("  [inject] start command →", path)
 
