@@ -1,5 +1,7 @@
 github.com/dcjulian29/go-toolbox v0.15.0 h1:3Qmk7GFs57aEa3dPJucd4g6ySHRUQjhIjSiHOSbKApw=
 github.com/dcjulian29/go-toolbox v0.15.0/go.mod h1:bekAdTrkwRjpkePc0KbzfEkmh56vucwGPB/rIJ7EbjY=
+github.com/dcjulian29/go-toolbox v0.16.0 h1:3Ei+HjnvsLRdVhFC/PKLNTZ8xdkBJiuoEGG1TBBWoGw=
+github.com/dcjulian29/go-toolbox v0.16.0/go.mod h1:OEudJiKbdJr05svZKGpbVlSL/ta03xbe0lIK0r6zDIk=
 golang.org/x/sys v0.42.0 h1:omrd2nAlyT5ESRdCLYdm3+fMfNFE/+Rf4bDIQImRJeo=
 golang.org/x/sys v0.42.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=

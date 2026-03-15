@@ -22,8 +22,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/dcjulian29/go-toolbox/elevation"
 	"github.com/dcjulian29/new-dev-vm/internal/config"
-	"github.com/dcjulian29/new-dev-vm/internal/elevation"
 	"github.com/dcjulian29/new-dev-vm/internal/linux"
 	"github.com/dcjulian29/new-dev-vm/internal/windows"
 )
