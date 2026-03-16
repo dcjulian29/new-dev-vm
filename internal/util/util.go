@@ -26,16 +26,6 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// XMLEscape escapes the five predefined XML entities in s.
-func XMLEscape(s string) string {
-	s = strings.ReplaceAll(s, "&", "&amp;")
-	s = strings.ReplaceAll(s, "<", "&lt;")
-	s = strings.ReplaceAll(s, ">", "&gt;")
-	s = strings.ReplaceAll(s, `"`, "&quot;")
-	s = strings.ReplaceAll(s, "'", "&apos;")
-	return s
-}
-
 // PromptPassword prints prompt, disables console echo via
 // windows.GetConsoleMode / windows.SetConsoleMode (no unsafe.Pointer needed),
 // reads one line, then restores the original console mode.

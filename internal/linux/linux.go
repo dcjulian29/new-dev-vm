@@ -25,8 +25,12 @@ import (
 	"time"
 
 	"github.com/dcjulian29/go-toolbox/filesystem"
+	"github.com/dcjulian29/go-toolbox/hyperv"
+	"github.com/dcjulian29/go-toolbox/hypervdisk"
+	"github.com/dcjulian29/go-toolbox/hypervhost"
+	"github.com/dcjulian29/go-toolbox/hypervmachine"
+
 	"github.com/dcjulian29/new-dev-vm/internal/config"
-	"github.com/dcjulian29/new-dev-vm/internal/hyperv"
 )
 
 type linuxVMParams struct {
@@ -64,7 +68,7 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 	fmt.Printf("\n[%s] Provisioning VM: %s\n\n", params.distro, computerName)
 
 	fmt.Println("[1/9] Checking Hyper-V...")
-	if err := hyperv.CheckHyperVEnabled(); err != nil {
+	if err := hyperv.Enabled(); err != nil {
 		return err
 	}
 
@@ -78,14 +82,14 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 
 	fmt.Println("[3/9] Creating VHDX...")
 
-	directory, err := hyperv.GetVMStoragePath()
+	directory, err := hypervhost.VMStoragePath()
 	if err != nil {
 		return err
 	}
 
 	vhdxPath := filepath.Join(directory, computerName+".vhdx")
 	if filesystem.FileExists(vhdxPath) {
-		state, err := hyperv.VMState(computerName)
+		state, err := hypervmachine.State(computerName)
 		if err != nil {
 			return err
 		}
@@ -101,7 +105,7 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 		}
 	}
 
-	if err := hyperv.CreateDynamicVHDX(vhdxPath, cfg.LinuxDiskSizeBytes); err != nil {
+	if err := hypervdisk.CreateDynamic(vhdxPath, cfg.LinuxDiskSizeBytes); err != nil {
 		return fmt.Errorf("creating VHDX: %w", err)
 	}
 
@@ -109,13 +113,13 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 
 	fmt.Println("[4/9] Creating virtual machine (Generation 2)...")
 
-	if hyperv.VMExists(computerName) {
-		if err := hyperv.RemoveVM(computerName); err != nil {
+	if hypervmachine.Exists(computerName) {
+		if err := hypervmachine.Remove(computerName); err != nil {
 			return err
 		}
 	}
 
-	vmCfg := hyperv.VMConfig{
+	vmCfg := hypervmachine.Config{
 		Name:           computerName,
 		VHDXPath:       vhdxPath,
 		VirtualSwitch:  cfg.VirtualSwitch,
@@ -125,47 +129,47 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 		SecureBoot:     !cfg.LinuxDisableSecureBoot,
 	}
 
-	if err := hyperv.CreateVM(vmCfg); err != nil {
+	if err := hypervmachine.Create(vmCfg); err != nil {
 		return err
 	}
 
 	fmt.Println("[5/9] Configuring VM...")
-	if err := hyperv.SetProcessorCount(computerName, cfg.ProcessorCount); err != nil {
+	if err := hypervmachine.SetProcessorCount(computerName, cfg.ProcessorCount); err != nil {
 		return err
 	}
 
 	if cfg.LinuxDisableSecureBoot {
 		fmt.Println("      Disabling Secure Boot...")
-		if err := hyperv.DisableSecureBoot(computerName); err != nil {
+		if err := hypervmachine.DisableSecureBoot(computerName); err != nil {
 			return err
 		}
 	} else {
 		fmt.Println("      Setting Secure Boot template to MicrosoftUEFICertificateAuthority...")
-		if err := hyperv.SetSecureBootTemplate(computerName, "MicrosoftUEFICertificateAuthority"); err != nil {
+		if err := hypervmachine.SetSecureBootTemplate(computerName, "MicrosoftUEFICertificateAuthority"); err != nil {
 			return err
 		}
 	}
 
-	if err := hyperv.DisableAutomaticCheckpoints(computerName); err != nil {
+	if err := hypervmachine.DisableAutomaticCheckpoints(computerName); err != nil {
 		return err
 	}
 
-	if err := hyperv.EnableCheckpoints(computerName); err != nil {
+	if err := hypervmachine.EnableCheckpoints(computerName); err != nil {
 		return err
 	}
 
 	fmt.Printf("[6/9] Attaching %s ISO...\n", params.distro)
-	if err := hyperv.AttachDVD(computerName, isoPath); err != nil {
+	if err := hypervmachine.AttachDVD(computerName, isoPath); err != nil {
 		return fmt.Errorf("attaching ISO: %w", err)
 	}
 
 	fmt.Println("[7/9] Setting boot order (DVD first)...")
-	if err := hyperv.SetBootOrderDVDFirst(computerName); err != nil {
+	if err := hypervmachine.SetBootOrderDVDFirst(computerName); err != nil {
 		return fmt.Errorf("setting boot order: %w", err)
 	}
 
 	fmt.Println("[8/9] Starting VM...")
-	if err := hyperv.StartVM(computerName); err != nil {
+	if err := hypervmachine.Start(computerName); err != nil {
 		return err
 	}
 

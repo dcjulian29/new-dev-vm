@@ -25,9 +25,11 @@ import (
 	"time"
 
 	"github.com/dcjulian29/go-toolbox/filesystem"
+	"github.com/dcjulian29/go-toolbox/hyperv"
+	"github.com/dcjulian29/go-toolbox/hypervdisk"
+	"github.com/dcjulian29/go-toolbox/hypervhost"
+	"github.com/dcjulian29/go-toolbox/hypervmachine"
 	"github.com/dcjulian29/new-dev-vm/internal/config"
-	"github.com/dcjulian29/new-dev-vm/internal/disk"
-	"github.com/dcjulian29/new-dev-vm/internal/hyperv"
 	"github.com/dcjulian29/new-dev-vm/internal/util"
 )
 
@@ -48,12 +50,12 @@ func ProvisionWindows(cfg *config.Config) error {
 	fmt.Printf("\n[Windows] Provisioning VM: %s\n", computerName)
 
 	fmt.Println("[1/9] Checking Hyper-V...")
-	if err := hyperv.CheckHyperVEnabled(); err != nil {
+	if err := hyperv.Enabled(); err != nil {
 		return err
 	}
 
 	fmt.Println("[2/9] Locating base image...")
-	baseImage, err := hyperv.FindLatestBaseImage(cfg.WindowsBaseImagePath, cfg.WindowsBaseImagePattern)
+	baseImage, err := hypervhost.FindLatestBaseDisk(cfg.WindowsBaseImagePath, cfg.WindowsBaseImagePattern)
 	if err != nil {
 		return err
 	}
@@ -62,7 +64,7 @@ func ProvisionWindows(cfg *config.Config) error {
 
 	fmt.Println("[3/9] Creating differencing VHDX...")
 
-	directory, err := hyperv.GetVMStoragePath()
+	directory, err := hypervhost.VMStoragePath()
 	if err != nil {
 		return err
 	}
@@ -70,7 +72,7 @@ func ProvisionWindows(cfg *config.Config) error {
 	vhdxPath := filepath.Join(directory, computerName+".vhdx")
 
 	if filesystem.FileExists(vhdxPath) {
-		state, err := hyperv.VMState(computerName)
+		state, err := hypervmachine.State(computerName)
 		if err != nil {
 			return err
 		}
@@ -86,31 +88,58 @@ func ProvisionWindows(cfg *config.Config) error {
 		}
 	}
 
-	if err := hyperv.CreateDifferencingVHDX(baseImage, vhdxPath); err != nil {
+	if err := hypervdisk.CreateDifferencing(baseImage, vhdxPath); err != nil {
 		return err
 	}
 
 	fmt.Printf("      VHDX: %s\n", vhdxPath)
 
 	fmt.Println("[4/9] Injecting files into VHDX...")
-	if err := disk.InjectWindowsFiles(
-		vhdxPath,
-		computerName,
-		password,
-		*cfg,
-	); err != nil {
-		return fmt.Errorf("file injection failed: %w", err)
+
+	drive, err := hypervdisk.Mount(vhdxPath)
+	if err != nil {
+		return fmt.Errorf("failed vhdx mount: %w", err)
+	}
+
+	injectCfg := hypervdisk.InjectConfig{
+		ComputerName:     computerName,
+		InstallPackage:   cfg.WindowsInstallPackage,
+		MountedDrive:     drive,
+		StartScript:      cfg.WindowsStartScript,
+		UnattendTemplate: cfg.WindowsUnattendTemplate,
+		UserName:         cfg.WindowsUser,
+		UserPassword:     password,
+	}
+
+	if err := hypervdisk.InjectStartCommand(&injectCfg); err != nil {
+		return fmt.Errorf("start command injection failed: %w", err)
+	}
+
+	if err := hypervdisk.InjectStartScript(&injectCfg); err != nil {
+		return fmt.Errorf("start script injection failed: %w", err)
+	}
+
+	if err := hypervdisk.InjectUnattendFile(&injectCfg); err != nil {
+		return fmt.Errorf("unattend file injection failed: %w", err)
+	}
+
+	if err := syncConfig(drive, computerName, cfg); err != nil {
+		return fmt.Errorf("sync config injection failed: %w", err)
+	}
+
+	if err := hypervdisk.Dismount(vhdxPath); err != nil {
+		return fmt.Errorf("failed vhdx dismount: %w", err)
 	}
 
 	fmt.Println("[5/9] Creating virtual machine...")
 
-	if hyperv.VMExists(computerName) {
-		if err := hyperv.RemoveVM(computerName); err != nil {
+	if hypervmachine.Exists(computerName) {
+		if err := hypervmachine.Remove(computerName); err != nil {
 			return err
 		}
 	}
 
-	vmCfg := hyperv.VMConfig{
+	vmCfg := hypervmachine.Config{
 		Name:           computerName,
 		VHDXPath:       vhdxPath,
 		VirtualSwitch:  cfg.VirtualSwitch,
@@ -120,36 +149,36 @@ func ProvisionWindows(cfg *config.Config) error {
 		SecureBoot:     true,
 	}
 
-	if err := hyperv.CreateVM(vmCfg); err != nil {
+	if err := hypervmachine.Create(vmCfg); err != nil {
 		return err
 	}
 
 	fmt.Println("[6/9] Configuring VM...")
-	if err := hyperv.SetProcessorCount(computerName, cfg.ProcessorCount); err != nil {
+	if err := hypervmachine.SetProcessorCount(computerName, cfg.ProcessorCount); err != nil {
 		return err
 	}
 
-	if err := hyperv.SetSecureBootTemplate(computerName, "MicrosoftWindows"); err != nil {
+	if err := hypervmachine.SetSecureBootTemplate(computerName, "MicrosoftWindows"); err != nil {
 		return err
 	}
 
-	if err := hyperv.DisableAutomaticCheckpoints(computerName); err != nil {
+	if err := hypervmachine.DisableAutomaticCheckpoints(computerName); err != nil {
 		return err
 	}
 
-	if err := hyperv.EnableCheckpoints(computerName); err != nil {
+	if err := hypervmachine.EnableCheckpoints(computerName); err != nil {
 		return err
 	}
 
 	fmt.Println("[7/9] Configuring dynamic memory...")
 	minMem := cfg.MemoryBytes / 4
 	maxMem := cfg.MemoryBytes
-	if err := hyperv.SetDynamicMemory(computerName, cfg.MemoryBytes, minMem, maxMem); err != nil {
+	if err := hypervmachine.SetDynamicMemory(computerName, cfg.MemoryBytes, minMem, maxMem); err != nil {
 		return err
 	}
 
 	fmt.Println("[8/9] Starting VM...")
-	if err := hyperv.StartVM(computerName); err != nil {
+	if err := hypervmachine.Start(computerName); err != nil {
 		return err
 	}
 
@@ -160,6 +189,29 @@ func ProvisionWindows(cfg *config.Config) error {
 	}
 
 	fmt.Printf("\n✓ Windows VM %q provisioned successfully.\n", computerName)
+
+	return nil
+}
+
+func syncConfig(drive, computerName string, cfg *config.Config) error {
+	if cfg.WindowsSyncBasePath != "" && filesystem.FileExists(cfg.WindowsStartScript) {
+		files := []string{
+			"config.xml",
+			"key.pem",
+			"cert.pem",
+		}
+
+		for _, file := range files {
+			src := filepath.Join(cfg.WindowsSyncBasePath, computerName, file)
+			dst := filepath.Join(drive, "Windows", "Setup", "Scripts", file)
+
+			if filesystem.FileExists(src) {
+				if err := filesystem.CopyFile(src, dst); err != nil {
+					return fmt.Errorf("injecting sync file '%s': %w", file, err)
+				}
+			}
+		}
+	}
 
 	return nil
 }
