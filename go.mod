@@ -7,4 +7,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/dcjulian29/go-toolbox v0.19.4
+require github.com/dcjulian29/go-toolbox v0.20.2
