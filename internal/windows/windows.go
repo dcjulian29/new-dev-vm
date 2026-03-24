@@ -29,6 +29,7 @@ import (
 	"github.com/dcjulian29/go-toolbox/hypervdisk"
 	"github.com/dcjulian29/go-toolbox/hypervhost"
 	"github.com/dcjulian29/go-toolbox/hypervmachine"
+	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/dcjulian29/new-dev-vm/internal/config"
 	"github.com/dcjulian29/new-dev-vm/internal/util"
 )
@@ -49,12 +50,12 @@ func ProvisionWindows(cfg *config.Config) error {
 
 	fmt.Printf("\n[Windows] Provisioning VM: %s\n", computerName)
 
-	fmt.Println("[1/9] Checking Hyper-V...")
+	stepOut("[1/9] Checking Hyper-V...")
 	if err := hyperv.Enabled(); err != nil {
 		return err
 	}
 
-	fmt.Println("[2/9] Locating base image...")
+	stepOut("[2/9] Locating base image...")
 	baseImage, err := hypervhost.FindLatestBaseDisk(cfg.WindowsBaseImagePath, cfg.WindowsBaseImagePattern)
 	if err != nil {
 		return err
@@ -62,7 +63,7 @@ func ProvisionWindows(cfg *config.Config) error {
 
 	fmt.Printf("       Base image: %s\n", baseImage)
 
-	fmt.Println("[3/9] Creating differencing VHDX...")
+	stepOut("[3/9] Creating differencing VHDX...")
 
 	directory, err := hypervhost.VMStoragePath()
 	if err != nil {
@@ -94,7 +95,7 @@ func ProvisionWindows(cfg *config.Config) error {
 
 	fmt.Printf("      VHDX: %s\n", vhdxPath)
 
-	fmt.Println("[4/9] Injecting files into VHDX...")
+	stepOut("[4/9] Injecting files into VHDX...")
 
 	drive, err := hypervdisk.Mount(vhdxPath)
 	if err != nil {
@@ -131,7 +132,7 @@ func ProvisionWindows(cfg *config.Config) error {
 		return fmt.Errorf("failed vhdx dismount: %w", err)
 	}
 
-	fmt.Println("[5/9] Creating virtual machine...")
+	stepOut("[5/9] Creating virtual machine...")
 
 	if hypervmachine.Exists(computerName) {
 		if err := hypervmachine.Remove(computerName); err != nil {
@@ -153,7 +154,7 @@ func ProvisionWindows(cfg *config.Config) error {
 		return err
 	}
 
-	fmt.Println("[6/9] Configuring VM...")
+	stepOut("[6/9] Configuring VM...")
 	if err := hypervmachine.SetProcessorCount(computerName, cfg.ProcessorCount); err != nil {
 		return err
 	}
@@ -170,19 +171,19 @@ func ProvisionWindows(cfg *config.Config) error {
 		return err
 	}
 
-	fmt.Println("[7/9] Configuring dynamic memory...")
+	stepOut("[7/9] Configuring dynamic memory...")
 	minMem := cfg.MemoryBytes / 4
 	maxMem := cfg.MemoryBytes
 	if err := hypervmachine.SetDynamicMemory(computerName, cfg.MemoryBytes, minMem, maxMem); err != nil {
 		return err
 	}
 
-	fmt.Println("[8/9] Starting VM...")
+	stepOut("[8/9] Starting VM...")
 	if err := hypervmachine.Start(computerName); err != nil {
 		return err
 	}
 
-	fmt.Println("[9/9] Opening console...")
+	stepOut("[9/9] Opening console...")
 	time.Sleep(2 * time.Second)
 	if err := hyperv.OpenConsole(computerName); err != nil {
 		fmt.Printf("Warning: could not open console: %v\n", err)
@@ -191,6 +192,10 @@ func ProvisionWindows(cfg *config.Config) error {
 	fmt.Printf("\n✓ Windows VM %q provisioned successfully.\n", computerName)
 
 	return nil
+}
+
+func stepOut(text string) {
+	fmt.Println(textformat.Yellow(text))
 }
 
 func syncConfig(drive, computerName string, cfg *config.Config) error {
