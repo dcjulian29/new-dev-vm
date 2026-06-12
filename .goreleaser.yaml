@@ -22,9 +22,9 @@ archives:
         goos: windows
 chocolateys:
   - name: dcjulian29.apps.new-dev-vm
-    authors: Julian Easterling <julian@julianscorner.com>
+    authors: Julian Easterling
     project_url: https://github.com/dcjulian29/cert-auth/
-    copyright: 2023 Julian Easterling julian@julianscorner.com
+    copyright: 2026 Julian Easterling
     license_url: https://github.com/dcjulian29/cert-auth/blob/main/LICENSE
     require_license_acceptance: false
     bug_tracker_url: https://github.com/dcjulian29/cert-auth/issues
