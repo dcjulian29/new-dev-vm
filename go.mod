@@ -3,8 +3,8 @@ module github.com/dcjulian29/new-dev-vm
 go 1.25.0
 
 require (
-	golang.org/x/sys v0.46.0
+	golang.org/x/sys v0.47.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/dcjulian29/go-toolbox v0.22.0
+require github.com/dcjulian29/go-toolbox v0.33.0
