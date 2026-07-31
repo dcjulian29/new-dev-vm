@@ -1,6 +1,6 @@
 module github.com/dcjulian29/new-dev-vm
 
-go 1.25.0
+go 1.26.5
 
 require (
 	golang.org/x/sys v0.46.0
