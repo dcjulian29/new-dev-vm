@@ -155,7 +155,7 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 		return err
 	}
 
-	if err := hypervmachine.EnableCheckpoints(computerName); err != nil {
+	if err := hypervmachine.EnableStandardCheckpoints(computerName); err != nil {
 		return err
 	}
 

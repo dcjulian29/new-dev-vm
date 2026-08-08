@@ -168,7 +168,7 @@ func ProvisionWindows(cfg *config.Config) error {
 		return err
 	}
 
-	if err := hypervmachine.EnableCheckpoints(computerName); err != nil {
+	if err := hypervmachine.EnableStandardCheckpoints(computerName); err != nil {
 		return err
 	}
 
