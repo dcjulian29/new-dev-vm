@@ -134,7 +134,7 @@ func ProvisionWindows(cfg *config.Config) error {
 
 	stepOut("[5/9] Creating virtual machine...")
 
-	if hypervmachine.Exists(computerName) {
+	if hypervmachine.Exist(computerName) {
 		if err := hypervmachine.Remove(computerName); err != nil {
 			return err
 		}

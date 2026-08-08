@@ -113,7 +113,7 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 
 	fmt.Println("[4/9] Creating virtual machine (Generation 2)...")
 
-	if hypervmachine.Exists(computerName) {
+	if hypervmachine.Exist(computerName) {
 		if err := hypervmachine.Remove(computerName); err != nil {
 			return err
 		}
