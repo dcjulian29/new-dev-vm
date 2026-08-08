@@ -48,9 +48,8 @@ Configuration file: ~/.config/new-dev-vm.yml
 func main() {
 	args := os.Args[1:]
 	var mode string
-	for _, a := range args {
-		a = strings.TrimLeft(a, "-")
-		switch strings.ToLower(a) {
+	for _, arg := range args {
+		switch strings.ToLower(strings.TrimLeft(arg, "-")) {
 		case "help", "h":
 			fmt.Print(usage)
 			os.Exit(0)
@@ -63,7 +62,7 @@ func main() {
 		case "debian":
 			mode = "debian"
 		default:
-			fmt.Fprintf(os.Stderr, "Unknown option: %s\nRun 'new-dev-vm --help' for usage.\n", os.Args[len(os.Args)-len(args)])
+			fmt.Fprintf(os.Stderr, "Unknown option: %s\nRun 'new-dev-vm --help' for usage.\n", arg)
 			os.Exit(1)
 		}
 	}
