@@ -72,7 +72,7 @@ func ProvisionWindows(cfg *config.Config) error {
 
 	vhdxPath := filepath.Join(directory, computerName+".vhdx")
 
-	if filesystem.FileExists(vhdxPath) {
+	if filesystem.FileExist(vhdxPath) {
 		state, err := hypervmachine.State(computerName)
 		if err != nil {
 			return err
@@ -199,7 +199,7 @@ func stepOut(text string) {
 }
 
 func syncConfig(drive, computerName string, cfg *config.Config) error {
-	if cfg.WindowsSyncBasePath != "" && filesystem.FileExists(cfg.WindowsStartScript) {
+	if cfg.WindowsSyncBasePath != "" && filesystem.FileExist(cfg.WindowsStartScript) {
 		files := []string{
 			"config.xml",
 			"key.pem",
@@ -210,7 +210,7 @@ func syncConfig(drive, computerName string, cfg *config.Config) error {
 			src := filepath.Join(cfg.WindowsSyncBasePath, computerName, file)
 			dst := filepath.Join(drive, "Windows", "Setup", "Scripts", file)
 
-			if filesystem.FileExists(src) {
+			if filesystem.FileExist(src) {
 				if err := filesystem.CopyFile(src, dst); err != nil {
 					return fmt.Errorf("injecting sync file '%s': %w", file, err)
 				}

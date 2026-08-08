@@ -88,7 +88,7 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 	}
 
 	vhdxPath := filepath.Join(directory, computerName+".vhdx")
-	if filesystem.FileExists(vhdxPath) {
+	if filesystem.FileExist(vhdxPath) {
 		state, err := hypervmachine.State(computerName)
 		if err != nil {
 			return err
