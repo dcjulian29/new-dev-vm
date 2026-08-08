@@ -28,9 +28,10 @@ import (
 // Config holds all settings loaded from ~/.config/new-dev-vm.yml.
 type Config struct {
 	// Shared
-	MemoryBytes    int64  `yaml:"memoryBytes"`
-	ProcessorCount int    `yaml:"processorCount"`
-	VirtualSwitch  string `yaml:"virtualSwitch"`
+	MaximumMemoryBytes int64  `yaml:"maximumMemoryBytes"`
+	MemoryBytes        int64  `yaml:"memoryBytes"`
+	ProcessorCount     int    `yaml:"processorCount"`
+	VirtualSwitch      string `yaml:"virtualSwitch"`
 
 	// Windows VM
 	WindowsBaseImagePath    string `yaml:"windowsBaseImagePath"`
@@ -85,6 +86,17 @@ func Load() (*Config, error) {
 		cfg.LinuxDiskSizeBytes = 40 * 1024 * 1024 * 1024 // 40 GB
 	}
 
+	// An unset maximum means the VM uses static memory.
+	if cfg.MaximumMemoryBytes == 0 {
+		cfg.MaximumMemoryBytes = cfg.MemoryBytes
+	}
+
+	if cfg.MaximumMemoryBytes < cfg.MemoryBytes {
+		return nil, fmt.Errorf(
+			"maximumMemoryBytes (%d) must be greater than or equal to memoryBytes (%d)",
+			cfg.MaximumMemoryBytes, cfg.MemoryBytes)
+	}
+
 	return &cfg, nil
 }
 
@@ -94,6 +106,8 @@ func Print(cfg *Config) {
 
 	fmt.Printf("\nActive configuration  (%s)\n\n", path)
 	fmt.Println("── Shared ──────────────────────────────────────────────────")
+	fmt.Printf("  maximumMemoryBytes   : %d (%.1f GB)\n", cfg.MaximumMemoryBytes,
+		float64(cfg.MaximumMemoryBytes)/1e9)
 	fmt.Printf("  memoryBytes          : %d (%.1f GB)\n", cfg.MemoryBytes,
 		float64(cfg.MemoryBytes)/1e9)
 	fmt.Printf("  processorCount       : %d\n", cfg.ProcessorCount)

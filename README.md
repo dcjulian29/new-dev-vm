@@ -40,6 +40,7 @@ Key settings:
 | `virtualSwitch` | Hyper-V switch name |
 | `processorCount` | Number of processors to give the VM |
 | `memoryBytes` | Memory size of the VM in bytes |
+| `maximumMemoryBytes` | Upper bound for dynamic memory in bytes; unset or equal to `memoryBytes` means static memory |
 | `windowsBaseImagePath` | Directory containing base VHDX files |
 | `windowsBaseImagePattern` | Pattern to used to find the Windows base VHDX |
 | `windowsStartLayout` | Path to start menu layout XML |

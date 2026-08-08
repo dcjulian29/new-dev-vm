@@ -6,6 +6,11 @@ virtualSwitch: "Default Switch"
 processorCount: 4
 memoryBytes: 8589934592   # 8 GB
 
+# Upper bound for dynamic memory. Leave unset (or equal to memoryBytes) to give
+# the VM static memory. When larger, the VM starts at memoryBytes and grows to
+# this value on demand.
+#maximumMemoryBytes: 17179869184  # 16 GB
+
 # ── Windows VM ────────────────────────────────────────────────────────────────
 # Directory that is searched for the base disk files
 windowsBaseImagePath: "C:\\Hyper-V\\BaseImages"

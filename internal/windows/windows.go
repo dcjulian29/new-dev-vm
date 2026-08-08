@@ -50,20 +50,20 @@ func ProvisionWindows(cfg *config.Config) error {
 
 	fmt.Printf("\n[Windows] Provisioning VM: %s\n", computerName)
 
-	stepOut("[1/9] Checking Hyper-V...")
-	if err := hyperv.Enabled(); err != nil {
+	stepOut("Checking Hyper-V...")
+	if err := hyperv.EnsureEnabled(); err != nil {
 		return err
 	}
 
-	stepOut("[2/9] Locating base image...")
+	stepOut("Locating base image...")
 	baseImage, err := hypervhost.FindLatestBaseDisk(cfg.WindowsBaseImagePath, cfg.WindowsBaseImagePattern)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("       Base image: %s\n", baseImage)
+	fmt.Printf("  Base image: %s\n", baseImage)
 
-	stepOut("[3/9] Creating differencing VHDX...")
+	stepOut("Creating differencing VHDX...")
 
 	directory, err := hypervhost.VMStoragePath()
 	if err != nil {
@@ -72,7 +72,7 @@ func ProvisionWindows(cfg *config.Config) error {
 
 	vhdxPath := filepath.Join(directory, computerName+".vhdx")
 
-	if filesystem.FileExists(vhdxPath) {
+	if filesystem.FileExist(vhdxPath) {
 		state, err := hypervmachine.State(computerName)
 		if err != nil {
 			return err
@@ -93,9 +93,9 @@ func ProvisionWindows(cfg *config.Config) error {
 		return err
 	}
 
-	fmt.Printf("      VHDX: %s\n", vhdxPath)
+	fmt.Printf("  VHDX: %s\n", vhdxPath)
 
-	stepOut("[4/9] Injecting files into VHDX...")
+	stepOut("Injecting files into VHDX...")
 
 	drive, err := hypervdisk.Mount(vhdxPath)
 	if err != nil {
@@ -132,29 +132,30 @@ func ProvisionWindows(cfg *config.Config) error {
 		return fmt.Errorf("failed vhdx dismount: %w", err)
 	}
 
-	stepOut("[5/9] Creating virtual machine...")
+	stepOut("Creating virtual machine...")
 
-	if hypervmachine.Exists(computerName) {
+	if hypervmachine.Exist(computerName) {
 		if err := hypervmachine.Remove(computerName); err != nil {
 			return err
 		}
 	}
 
 	vmCfg := hypervmachine.Config{
-		Name:           computerName,
-		VHDXPath:       vhdxPath,
-		VirtualSwitch:  cfg.VirtualSwitch,
-		MemoryBytes:    cfg.MemoryBytes,
-		ProcessorCount: cfg.ProcessorCount,
-		Generation:     2,
-		SecureBoot:     true,
+		Name:               computerName,
+		VHDXPath:           vhdxPath,
+		VirtualSwitch:      cfg.VirtualSwitch,
+		MemoryBytes:        cfg.MemoryBytes,
+		MaximumMemoryBytes: cfg.MaximumMemoryBytes,
+		ProcessorCount:     cfg.ProcessorCount,
+		Generation:         2,
+		SecureBoot:         true,
 	}
 
-	if err := hypervmachine.Create(vmCfg); err != nil {
+	if err := hypervmachine.Create(&vmCfg); err != nil {
 		return err
 	}
 
-	stepOut("[6/9] Configuring VM...")
+	stepOut("Configuring VM...")
 	if err := hypervmachine.SetProcessorCount(computerName, cfg.ProcessorCount); err != nil {
 		return err
 	}
@@ -167,23 +168,16 @@ func ProvisionWindows(cfg *config.Config) error {
 		return err
 	}
 
-	if err := hypervmachine.EnableCheckpoints(computerName); err != nil {
+	if err := hypervmachine.EnableStandardCheckpoints(computerName); err != nil {
 		return err
 	}
 
-	stepOut("[7/9] Configuring dynamic memory...")
-	minMem := cfg.MemoryBytes / 4
-	maxMem := cfg.MemoryBytes
-	if err := hypervmachine.SetDynamicMemory(computerName, cfg.MemoryBytes, minMem, maxMem); err != nil {
-		return err
-	}
-
-	stepOut("[8/9] Starting VM...")
+	stepOut("Starting VM...")
 	if err := hypervmachine.Start(computerName); err != nil {
 		return err
 	}
 
-	stepOut("[9/9] Opening console...")
+	stepOut("Opening console...")
 	time.Sleep(2 * time.Second)
 	if err := hyperv.OpenConsole(computerName); err != nil {
 		fmt.Printf("Warning: could not open console: %v\n", err)
@@ -199,7 +193,7 @@ func stepOut(text string) {
 }
 
 func syncConfig(drive, computerName string, cfg *config.Config) error {
-	if cfg.WindowsSyncBasePath != "" && filesystem.FileExists(cfg.WindowsStartScript) {
+	if cfg.WindowsSyncBasePath != "" && filesystem.FileExist(cfg.WindowsStartScript) {
 		files := []string{
 			"config.xml",
 			"key.pem",
@@ -210,7 +204,7 @@ func syncConfig(drive, computerName string, cfg *config.Config) error {
 			src := filepath.Join(cfg.WindowsSyncBasePath, computerName, file)
 			dst := filepath.Join(drive, "Windows", "Setup", "Scripts", file)
 
-			if filesystem.FileExists(src) {
+			if filesystem.FileExist(src) {
 				if err := filesystem.CopyFile(src, dst); err != nil {
 					return fmt.Errorf("injecting sync file '%s': %w", file, err)
 				}
