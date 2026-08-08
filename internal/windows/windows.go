@@ -61,7 +61,7 @@ func ProvisionWindows(cfg *config.Config) error {
 		return err
 	}
 
-	fmt.Printf("       Base image: %s\n", baseImage)
+	fmt.Printf("  Base image: %s\n", baseImage)
 
 	stepOut("Creating differencing VHDX...")
 
@@ -93,7 +93,7 @@ func ProvisionWindows(cfg *config.Config) error {
 		return err
 	}
 
-	fmt.Printf("      VHDX: %s\n", vhdxPath)
+	fmt.Printf("  VHDX: %s\n", vhdxPath)
 
 	stepOut("Injecting files into VHDX...")
 

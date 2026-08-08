@@ -78,7 +78,7 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 		return fmt.Errorf("finding %s ISO: %w", params.distro, err)
 	}
 
-	fmt.Printf("      ISO: %s\n", isoPath)
+	fmt.Printf("  ISO: %s\n", isoPath)
 
 	fmt.Println("Creating VHDX...")
 
@@ -109,7 +109,7 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 		return fmt.Errorf("creating VHDX: %w", err)
 	}
 
-	fmt.Printf("      VHDX: %s\n", vhdxPath)
+	fmt.Printf("  VHDX: %s\n", vhdxPath)
 
 	fmt.Println("Creating virtual machine (Generation 2)...")
 
@@ -140,12 +140,12 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 	}
 
 	if cfg.LinuxDisableSecureBoot {
-		fmt.Println("      Disabling Secure Boot...")
+		fmt.Println("  Disabling Secure Boot...")
 		if err := hypervmachine.DisableSecureBoot(computerName); err != nil {
 			return err
 		}
 	} else {
-		fmt.Println("      Setting Secure Boot template to MicrosoftUEFICertificateAuthority...")
+		fmt.Println("  Setting Secure Boot template to MicrosoftUEFICertificateAuthority...")
 		if err := hypervmachine.SetSecureBootTemplate(computerName, "MicrosoftUEFICertificateAuthority"); err != nil {
 			return err
 		}
