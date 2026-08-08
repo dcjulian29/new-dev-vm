@@ -101,39 +101,8 @@ func ProvisionWindows(cfg *config.Config) error {
 
 	stepOut("Injecting files into VHDX...")
 
-	drive, err := hypervdisk.Mount(vhdxPath)
-	if err != nil {
-		return fmt.Errorf("failed vhdx mount: %w", err)
-	}
-
-	injectCfg := hypervdisk.InjectConfig{
-		ComputerName:     computerName,
-		InstallPackage:   cfg.WindowsInstallPackage,
-		MountedDrive:     drive,
-		StartScript:      cfg.WindowsStartScript,
-		UnattendTemplate: cfg.WindowsUnattendTemplate,
-		UserName:         cfg.WindowsUser,
-		UserPassword:     password,
-	}
-
-	if err := hypervdisk.InjectStartCommand(&injectCfg); err != nil {
-		return fmt.Errorf("start command injection failed: %w", err)
-	}
-
-	if err := hypervdisk.InjectStartScript(&injectCfg); err != nil {
-		return fmt.Errorf("start script injection failed: %w", err)
-	}
-
-	if err := hypervdisk.InjectUnattendFile(&injectCfg); err != nil {
-		return fmt.Errorf("unattend file injection failed: %w", err)
-	}
-
-	if err := syncConfig(drive, computerName, cfg); err != nil {
-		return fmt.Errorf("sync config injection failed: %w", err)
-	}
-
-	if err := hypervdisk.Dismount(vhdxPath); err != nil {
-		return fmt.Errorf("failed vhdx dismount: %w", err)
+	if err := injectFiles(vhdxPath, computerName, password, cfg); err != nil {
+		return err
 	}
 
 	stepOut("Creating virtual machine...")
@@ -194,6 +163,49 @@ func ProvisionWindows(cfg *config.Config) error {
 
 func stepOut(text string) {
 	fmt.Println(textformat.Yellow(text))
+}
+
+// injectFiles mounts the VHDX, injects the setup files, and always dismounts
+// the disk before returning so a failed injection cannot leave it attached.
+func injectFiles(vhdxPath, computerName, password string, cfg *config.Config) (err error) {
+	drive, err := hypervdisk.Mount(vhdxPath)
+	if err != nil {
+		return fmt.Errorf("failed vhdx mount: %w", err)
+	}
+
+	defer func() {
+		if dismountErr := hypervdisk.Dismount(vhdxPath); dismountErr != nil && err == nil {
+			err = fmt.Errorf("failed vhdx dismount: %w", dismountErr)
+		}
+	}()
+
+	injectCfg := hypervdisk.InjectConfig{
+		ComputerName:     computerName,
+		InstallPackage:   cfg.WindowsInstallPackage,
+		MountedDrive:     drive,
+		StartScript:      cfg.WindowsStartScript,
+		UnattendTemplate: cfg.WindowsUnattendTemplate,
+		UserName:         cfg.WindowsUser,
+		UserPassword:     password,
+	}
+
+	if err := hypervdisk.InjectStartCommand(&injectCfg); err != nil {
+		return fmt.Errorf("start command injection failed: %w", err)
+	}
+
+	if err := hypervdisk.InjectStartScript(&injectCfg); err != nil {
+		return fmt.Errorf("start script injection failed: %w", err)
+	}
+
+	if err := hypervdisk.InjectUnattendFile(&injectCfg); err != nil {
+		return fmt.Errorf("unattend file injection failed: %w", err)
+	}
+
+	if err := syncConfig(drive, computerName, cfg); err != nil {
+		return fmt.Errorf("sync config injection failed: %w", err)
+	}
+
+	return nil
 }
 
 func syncConfig(drive, computerName string, cfg *config.Config) error {
