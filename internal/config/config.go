@@ -37,7 +37,6 @@ type Config struct {
 	WindowsBaseImagePath    string `yaml:"windowsBaseImagePath"`
 	WindowsBaseImagePattern string `yaml:"windowsBaseImagePattern"`
 	WindowsInstallPackage   string `yaml:"windowsInstallPackage"`
-	WindowsStartLayout      string `yaml:"windowsStartLayout"`
 	WindowsStartScript      string `yaml:"windowsStartScript"`
 	WindowsSyncBasePath     string `yaml:"windowsSyncBasePath"`
 	WindowsUnattendTemplate string `yaml:"windowsUnattendTemplate"`
@@ -118,7 +117,6 @@ func Print(cfg *Config) {
 	fmt.Printf("  baseImagePattern     : %s\n", cfg.WindowsBaseImagePattern)
 	fmt.Printf("  installPackage       : %s\n", cfg.WindowsInstallPackage)
 	fmt.Printf("  unattendTemplate     : %s\n", cfg.WindowsUnattendTemplate)
-	fmt.Printf("  startLayout          : %s\n", cfg.WindowsStartLayout)
 	fmt.Printf("  startScript          : %s\n", cfg.WindowsStartScript)
 
 	fmt.Println()

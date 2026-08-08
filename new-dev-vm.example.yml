@@ -18,9 +18,6 @@ windowsBaseImagePath: "C:\\Hyper-V\\BaseImages"
 # Pattern used to locate the latest Windows base VHDX
 windowsBaseImagePattern: "Win11Base-*.vhdx"
 
-# Path to the start-menu layout XML
-windowsStartLayout: "C:\\HyperV\\Templates\\StartLayout.xml"
-
 # Path to the startup script that is injected into the Windows VM
 windowsStartScript: "C:\\HyperV\\Scripts\\startup.ps1"
 

@@ -43,7 +43,6 @@ Key settings:
 | `maximumMemoryBytes` | Upper bound for dynamic memory in bytes; unset or equal to `memoryBytes` means static memory |
 | `windowsBaseImagePath` | Directory containing base VHDX files |
 | `windowsBaseImagePattern` | Pattern to used to find the Windows base VHDX |
-| `windowsStartLayout` | Path to start menu layout XML |
 | `windowsStartScript` | Path to startup PowerShell script to injected |
 | `windowsInstallPackage` | Name of the installation package |
 | `windowsSyncBasePath` | Directory that contains the Syncthing files |
