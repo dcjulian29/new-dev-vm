@@ -51,7 +51,7 @@ func ProvisionWindows(cfg *config.Config) error {
 	fmt.Printf("\n[Windows] Provisioning VM: %s\n", computerName)
 
 	stepOut("[1/9] Checking Hyper-V...")
-	if err := hyperv.Enabled(); err != nil {
+	if err := hyperv.EnsureEnabled(); err != nil {
 		return err
 	}
 

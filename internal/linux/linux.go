@@ -68,7 +68,7 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 	fmt.Printf("\n[%s] Provisioning VM: %s\n\n", params.distro, computerName)
 
 	fmt.Println("[1/9] Checking Hyper-V...")
-	if err := hyperv.Enabled(); err != nil {
+	if err := hyperv.EnsureEnabled(); err != nil {
 		return err
 	}
 
