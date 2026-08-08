@@ -134,6 +134,11 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 		SecureBoot:         !cfg.LinuxDisableSecureBoot,
 	}
 
+	if cfg.MaximumMemoryBytes > cfg.MemoryBytes {
+		fmt.Println("  Dynamic memory is enabled; the guest needs the Hyper-V")
+		fmt.Println("  balloon driver (hv_balloon) for it to take effect.")
+	}
+
 	if err := hypervmachine.Create(&vmCfg); err != nil {
 		return err
 	}
