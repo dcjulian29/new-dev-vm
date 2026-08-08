@@ -120,16 +120,17 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 	}
 
 	vmCfg := hypervmachine.Config{
-		Name:           computerName,
-		VHDXPath:       vhdxPath,
-		VirtualSwitch:  cfg.VirtualSwitch,
-		MemoryBytes:    cfg.MemoryBytes,
-		ProcessorCount: cfg.ProcessorCount,
-		Generation:     2,
-		SecureBoot:     !cfg.LinuxDisableSecureBoot,
+		Name:               computerName,
+		VHDXPath:           vhdxPath,
+		VirtualSwitch:      cfg.VirtualSwitch,
+		MemoryBytes:        cfg.MemoryBytes,
+		MaximumMemoryBytes: cfg.MemoryBytes,
+		ProcessorCount:     cfg.ProcessorCount,
+		Generation:         2,
+		SecureBoot:         !cfg.LinuxDisableSecureBoot,
 	}
 
-	if err := hypervmachine.Create(vmCfg); err != nil {
+	if err := hypervmachine.Create(&vmCfg); err != nil {
 		return err
 	}
 

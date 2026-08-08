@@ -141,16 +141,17 @@ func ProvisionWindows(cfg *config.Config) error {
 	}
 
 	vmCfg := hypervmachine.Config{
-		Name:           computerName,
-		VHDXPath:       vhdxPath,
-		VirtualSwitch:  cfg.VirtualSwitch,
-		MemoryBytes:    cfg.MemoryBytes,
-		ProcessorCount: cfg.ProcessorCount,
-		Generation:     2,
-		SecureBoot:     true,
+		Name:               computerName,
+		VHDXPath:           vhdxPath,
+		VirtualSwitch:      cfg.VirtualSwitch,
+		MemoryBytes:        cfg.MemoryBytes,
+		MaximumMemoryBytes: cfg.MemoryBytes,
+		ProcessorCount:     cfg.ProcessorCount,
+		Generation:         2,
+		SecureBoot:         true,
 	}
 
-	if err := hypervmachine.Create(vmCfg); err != nil {
+	if err := hypervmachine.Create(&vmCfg); err != nil {
 		return err
 	}
 
