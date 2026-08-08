@@ -144,15 +144,10 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 	}
 
 	fmt.Println("Configuring VM...")
-	if err := hypervmachine.SetProcessorCount(computerName, cfg.ProcessorCount); err != nil {
-		return err
-	}
 
 	if cfg.LinuxDisableSecureBoot {
-		fmt.Println("  Disabling Secure Boot...")
-		if err := hypervmachine.DisableSecureBoot(computerName); err != nil {
-			return err
-		}
+		// Create already disabled Secure Boot from the VM config.
+		fmt.Println("  Secure Boot disabled.")
 	} else {
 		fmt.Println("  Setting Secure Boot template to MicrosoftUEFICertificateAuthority...")
 		if err := hypervmachine.SetSecureBootTemplate(computerName, "MicrosoftUEFICertificateAuthority"); err != nil {

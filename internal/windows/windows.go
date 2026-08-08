@@ -142,10 +142,6 @@ func ProvisionWindows(cfg *config.Config) error {
 	}
 
 	stepOut("Configuring VM...")
-	if err := hypervmachine.SetProcessorCount(computerName, cfg.ProcessorCount); err != nil {
-		return err
-	}
-
 	if err := hypervmachine.SetSecureBootTemplate(computerName, "MicrosoftWindows"); err != nil {
 		return err
 	}
