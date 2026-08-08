@@ -49,22 +49,32 @@ func main() {
 	args := os.Args[1:]
 	var mode string
 	for _, arg := range args {
+		var selected string
+
 		switch strings.ToLower(strings.TrimLeft(arg, "-")) {
 		case "help", "h":
 			fmt.Print(usage)
 			os.Exit(0)
 		case "config":
-			mode = "config"
+			selected = "config"
 		case "windows":
-			mode = "windows"
+			selected = "windows"
 		case "ubuntu":
-			mode = "ubuntu"
+			selected = "ubuntu"
 		case "debian":
-			mode = "debian"
+			selected = "debian"
 		default:
 			fmt.Fprintf(os.Stderr, "Unknown option: %s\nRun 'new-dev-vm --help' for usage.\n", arg)
 			os.Exit(1)
 		}
+
+		if mode != "" && mode != selected {
+			fmt.Fprintf(os.Stderr, "Conflicting options: '--%s' cannot be combined with '%s'.\n"+
+				"Run 'new-dev-vm --help' for usage.\n", mode, arg)
+			os.Exit(1)
+		}
+
+		mode = selected
 	}
 
 	cfg, err := config.Load()
