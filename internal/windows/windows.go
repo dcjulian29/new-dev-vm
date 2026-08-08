@@ -34,6 +34,14 @@ import (
 	"github.com/dcjulian29/new-dev-vm/internal/util"
 )
 
+const (
+	// nameSuffix is appended to the host name to name the VM.
+	nameSuffix = "DEV"
+	// maxHostnameLength leaves room for nameSuffix within the 15 character
+	// limit Windows imposes on a computer name.
+	maxHostnameLength = 15 - len(nameSuffix)
+)
+
 // ProvisionWindows creates a Windows development VM
 func ProvisionWindows(cfg *config.Config) error {
 	hostname, err := os.Hostname()
@@ -41,7 +49,12 @@ func ProvisionWindows(cfg *config.Config) error {
 		return err
 	}
 
-	computerName := strings.ToUpper(hostname) + "DEV"
+	computerName, shortened := computerNameFor(hostname)
+	if shortened {
+		fmt.Printf("Hostname %q is too long; using %q as the computer name.\n",
+			strings.ToUpper(hostname), computerName)
+	}
+
 	prompt := fmt.Sprintf("Enter password for '%s' on %s: ", cfg.WindowsUser, computerName)
 	password, err := util.PromptPassword(prompt)
 	if err != nil {
@@ -163,6 +176,18 @@ func ProvisionWindows(cfg *config.Config) error {
 
 func stepOut(text string) {
 	fmt.Println(textformat.Yellow(text))
+}
+
+// computerNameFor builds the VM computer name from the host name, shortening
+// the host name when needed to stay within the Windows computer name limit.
+// The second return value reports whether the host name had to be shortened.
+func computerNameFor(hostname string) (string, bool) {
+	name := strings.ToUpper(hostname)
+	if len(name) <= maxHostnameLength {
+		return name + nameSuffix, false
+	}
+
+	return name[:maxHostnameLength] + nameSuffix, true
 }
 
 // injectFiles mounts the VHDX, injects the setup files, and always dismounts
