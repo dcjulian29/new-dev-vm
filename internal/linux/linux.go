@@ -33,10 +33,25 @@ import (
 	"github.com/dcjulian29/new-dev-vm/internal/config"
 )
 
+// nameSuffix is appended to the host name to name the VM. The first letter of
+// the distribution follows it so each Linux VM gets a distinct name.
+const nameSuffix = "DEVL"
+
 type linuxVMParams struct {
 	distro        string // "Ubuntu" or "Debian"
 	isoPattern    string
 	isoSearchPath string
+}
+
+// computerNameFor builds the VM name from the host name and the distribution.
+func computerNameFor(hostname, distro string) string {
+	name := strings.ToUpper(hostname) + nameSuffix
+
+	if distro == "" {
+		return name
+	}
+
+	return name + strings.ToUpper(distro[:1])
 }
 
 // ProvisionUbuntu provisions an Ubuntu development VM.
@@ -63,7 +78,7 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 		return err
 	}
 
-	computerName := strings.ToUpper(hostname) + "DEVL" + string(params.distro[0])
+	computerName := computerNameFor(hostname, params.distro)
 
 	fmt.Printf("\n[%s] Provisioning VM: %s\n\n", params.distro, computerName)
 
