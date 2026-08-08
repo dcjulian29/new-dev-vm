@@ -175,7 +175,7 @@ func ProvisionWindows(cfg *config.Config) error {
 	stepOut("[7/9] Configuring dynamic memory...")
 	minMem := cfg.MemoryBytes / 4
 	maxMem := cfg.MemoryBytes
-	if err := hypervmachine.SetDynamicMemory(computerName, cfg.MemoryBytes, minMem, maxMem); err != nil {
+	if err := hypervmachine.SetDynamicMemory(computerName, minMem, maxMem); err != nil {
 		return err
 	}
 
