@@ -67,12 +67,12 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 
 	fmt.Printf("\n[%s] Provisioning VM: %s\n\n", params.distro, computerName)
 
-	fmt.Println("[1/9] Checking Hyper-V...")
+	fmt.Println("Checking Hyper-V...")
 	if err := hyperv.EnsureEnabled(); err != nil {
 		return err
 	}
 
-	fmt.Printf("[2/9] Locating %s ISO...\n", params.distro)
+	fmt.Printf("Locating %s ISO...\n", params.distro)
 	isoPath, err := filesystem.SearchForFile(params.isoSearchPath, params.isoPattern)
 	if err != nil {
 		return fmt.Errorf("finding %s ISO: %w", params.distro, err)
@@ -80,7 +80,7 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 
 	fmt.Printf("      ISO: %s\n", isoPath)
 
-	fmt.Println("[3/9] Creating VHDX...")
+	fmt.Println("Creating VHDX...")
 
 	directory, err := hypervhost.VMStoragePath()
 	if err != nil {
@@ -111,7 +111,7 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 
 	fmt.Printf("      VHDX: %s\n", vhdxPath)
 
-	fmt.Println("[4/9] Creating virtual machine (Generation 2)...")
+	fmt.Println("Creating virtual machine (Generation 2)...")
 
 	if hypervmachine.Exist(computerName) {
 		if err := hypervmachine.Remove(computerName); err != nil {
@@ -134,7 +134,7 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 		return err
 	}
 
-	fmt.Println("[5/9] Configuring VM...")
+	fmt.Println("Configuring VM...")
 	if err := hypervmachine.SetProcessorCount(computerName, cfg.ProcessorCount); err != nil {
 		return err
 	}
@@ -159,22 +159,22 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 		return err
 	}
 
-	fmt.Printf("[6/9] Attaching %s ISO...\n", params.distro)
+	fmt.Printf("Attaching %s ISO...\n", params.distro)
 	if err := hypervmachine.AttachDVD(computerName, isoPath); err != nil {
 		return fmt.Errorf("attaching ISO: %w", err)
 	}
 
-	fmt.Println("[7/9] Setting boot order (DVD first)...")
+	fmt.Println("Setting boot order (DVD first)...")
 	if err := hypervmachine.SetBootOrderDVDFirst(computerName); err != nil {
 		return fmt.Errorf("setting boot order: %w", err)
 	}
 
-	fmt.Println("[8/9] Starting VM...")
+	fmt.Println("Starting VM...")
 	if err := hypervmachine.Start(computerName); err != nil {
 		return err
 	}
 
-	fmt.Println("[9/9] Opening console...")
+	fmt.Println("Opening console...")
 	time.Sleep(2 * time.Second)
 	if err := hyperv.OpenConsole(computerName); err != nil {
 		fmt.Printf("Warning: could not open console: %v\n", err)
