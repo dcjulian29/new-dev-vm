@@ -124,7 +124,7 @@ func provisionLinux(cfg *config.Config, params linuxVMParams) error {
 		VHDXPath:           vhdxPath,
 		VirtualSwitch:      cfg.VirtualSwitch,
 		MemoryBytes:        cfg.MemoryBytes,
-		MaximumMemoryBytes: cfg.MemoryBytes,
+		MaximumMemoryBytes: cfg.MaximumMemoryBytes,
 		ProcessorCount:     cfg.ProcessorCount,
 		Generation:         2,
 		SecureBoot:         !cfg.LinuxDisableSecureBoot,

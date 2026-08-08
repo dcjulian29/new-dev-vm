@@ -145,7 +145,7 @@ func ProvisionWindows(cfg *config.Config) error {
 		VHDXPath:           vhdxPath,
 		VirtualSwitch:      cfg.VirtualSwitch,
 		MemoryBytes:        cfg.MemoryBytes,
-		MaximumMemoryBytes: cfg.MemoryBytes,
+		MaximumMemoryBytes: cfg.MaximumMemoryBytes,
 		ProcessorCount:     cfg.ProcessorCount,
 		Generation:         2,
 		SecureBoot:         true,
@@ -169,13 +169,6 @@ func ProvisionWindows(cfg *config.Config) error {
 	}
 
 	if err := hypervmachine.EnableStandardCheckpoints(computerName); err != nil {
-		return err
-	}
-
-	stepOut("Configuring dynamic memory...")
-	minMem := cfg.MemoryBytes / 4
-	maxMem := cfg.MemoryBytes
-	if err := hypervmachine.SetDynamicMemory(computerName, minMem, maxMem); err != nil {
 		return err
 	}
 
