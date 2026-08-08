@@ -229,25 +229,36 @@ func injectFiles(vhdxPath, computerName, password string, cfg *config.Config) (e
 	return nil
 }
 
+// syncConfig injects the Syncthing files for the VM. Syncthing is optional and
+// is skipped when no base path is configured, but a configured base path must
+// hold every file for the VM.
 func syncConfig(drive, computerName string, cfg *config.Config) error {
-	if cfg.WindowsSyncBasePath != "" && filesystem.FileExist(cfg.WindowsStartScript) {
-		files := []string{
-			"config.xml",
-			"key.pem",
-			"cert.pem",
+	if cfg.WindowsSyncBasePath == "" {
+		return nil
+	}
+
+	files := []string{
+		"config.xml",
+		"key.pem",
+		"cert.pem",
+	}
+
+	source := filepath.Join(cfg.WindowsSyncBasePath, computerName)
+
+	for _, file := range files {
+		src := filepath.Join(source, file)
+		dst := filepath.Join(drive, "Windows", "Setup", "Scripts", file)
+
+		if !filesystem.FileExist(src) {
+			return fmt.Errorf("sync file '%s' not found in '%s'", file, source)
 		}
 
-		for _, file := range files {
-			src := filepath.Join(cfg.WindowsSyncBasePath, computerName, file)
-			dst := filepath.Join(drive, "Windows", "Setup", "Scripts", file)
-
-			if filesystem.FileExist(src) {
-				if err := filesystem.CopyFile(src, dst); err != nil {
-					return fmt.Errorf("injecting sync file '%s': %w", file, err)
-				}
-			}
+		if err := filesystem.CopyFile(src, dst); err != nil {
+			return fmt.Errorf("injecting sync file '%s': %w", file, err)
 		}
 	}
+
+	fmt.Printf("  Syncthing files injected from %s\n", source)
 
 	return nil
 }
