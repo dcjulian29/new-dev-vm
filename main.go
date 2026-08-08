@@ -18,6 +18,7 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -45,16 +46,21 @@ Configuration file: ~/.config/new-dev-vm.yml
   Copy new-dev-vm.example.yml to that path and edit before first use.
 `
 
-func main() {
-	args := os.Args[1:]
+// errHelpRequested reports that usage was asked for rather than a mode chosen.
+var errHelpRequested = errors.New("help requested")
+
+// parseMode determines which mode the arguments select, returning an empty
+// mode when none was given. It reports errHelpRequested when usage was asked
+// for, and an error when an option is unknown or conflicts with an earlier one.
+func parseMode(args []string) (string, error) {
 	var mode string
+
 	for _, arg := range args {
 		var selected string
 
 		switch strings.ToLower(strings.TrimLeft(arg, "-")) {
 		case "help", "h":
-			fmt.Print(usage)
-			os.Exit(0)
+			return "", errHelpRequested
 		case "config":
 			selected = "config"
 		case "windows":
@@ -64,17 +70,29 @@ func main() {
 		case "debian":
 			selected = "debian"
 		default:
-			fmt.Fprintf(os.Stderr, "Unknown option: %s\nRun 'new-dev-vm --help' for usage.\n", arg)
-			os.Exit(1)
+			return "", fmt.Errorf("unknown option: %s", arg)
 		}
 
 		if mode != "" && mode != selected {
-			fmt.Fprintf(os.Stderr, "Conflicting options: '--%s' cannot be combined with '%s'.\n"+
-				"Run 'new-dev-vm --help' for usage.\n", mode, arg)
-			os.Exit(1)
+			return "", fmt.Errorf("conflicting options: '--%s' cannot be combined with '%s'", mode, arg)
 		}
 
 		mode = selected
+	}
+
+	return mode, nil
+}
+
+func main() {
+	mode, err := parseMode(os.Args[1:])
+	if err != nil {
+		if errors.Is(err, errHelpRequested) {
+			fmt.Print(usage)
+			os.Exit(0)
+		}
+
+		fmt.Fprintf(os.Stderr, "%s\nRun 'new-dev-vm --help' for usage.\n", err)
+		os.Exit(1)
 	}
 
 	cfg, err := config.Load()
